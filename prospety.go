@@ -12,6 +12,10 @@ import (
 	"go.uber.org/ratelimit"
 )
 
+const (
+	_pageLimit = 100
+)
+
 type Option func(option *options) error
 
 type options struct {
@@ -180,7 +184,35 @@ type getChannelsResponse struct {
 	Data  []Channel `json:"data"`
 }
 
-func (c *Client) GetChannels(limit, page int) ([]Channel, error) {
+func (c *Client) GetChannels() ([]Channel, error) {
+	// transparently paginate
+	var channels []Channel
+
+	limit := _pageLimit
+	page := 0
+
+	for {
+		pageChannels, err := c.getChannels(limit, page)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get channels: %w", err)
+		}
+
+		channels = append(channels, pageChannels...)
+
+		if len(pageChannels) < limit {
+			break
+		}
+
+		page++
+	}
+
+	return channels, nil
+}
+
+func (c *Client) getChannels(limit, page int) ([]Channel, error) {
+	// fix 1 indexing in the API
+	page++
+
 	data, err := c.get([]string{"channels"}, []param{
 		{
 			key:   "limit",
@@ -224,7 +256,35 @@ type getQuickSearchesResponse struct {
 	Data  []apiQuickSearch `json:"data"`
 }
 
-func (c *Client) GetQuickSearches(limit, page int) ([]QuickSearch, error) {
+func (c *Client) GetQuickSearches() ([]QuickSearch, error) {
+	// transparently paginate
+	var quickSearches []QuickSearch
+
+	limit := _pageLimit
+	page := 0
+
+	for {
+		pageQuickSearches, err := c.getQuickSearches(limit, page)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get quick searches: %w", err)
+		}
+
+		quickSearches = append(quickSearches, pageQuickSearches...)
+
+		if len(pageQuickSearches) < limit {
+			break
+		}
+
+		page++
+	}
+
+	return quickSearches, nil
+}
+
+func (c *Client) getQuickSearches(limit, page int) ([]QuickSearch, error) {
+	// fix 1 indexing in the API
+	page++
+
 	data, err := c.get([]string{"quick_searches"}, []param{
 		{
 			key:   "limit",
@@ -424,7 +484,35 @@ type getSearchesResponse struct {
 	Data  []Search `json:"data"`
 }
 
-func (c *Client) GetSearches(limit, page int) ([]Search, error) {
+func (c *Client) GetSearches() ([]Search, error) {
+	// transparently gets all pages
+	var res []Search
+
+	limit := _pageLimit
+	page := 0
+
+	for {
+		searches, err := c.getSearches(limit, page)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get searches: %w", err)
+		}
+
+		res = append(res, searches...)
+
+		if len(searches) < limit {
+			break
+		}
+
+		page++
+	}
+
+	return res, nil
+}
+
+func (c *Client) getSearches(limit, page int) ([]Search, error) {
+	// fix 1 indexing in API
+	page++
+
 	data, err := c.get([]string{"searches"}, []param{
 		{
 			key:   "limit",
