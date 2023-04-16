@@ -1,4 +1,4 @@
-module github.com/bjornpagen/prospety
+module github.com/bjornpagen/prospety-go
 
 go 1.20
 
