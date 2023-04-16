@@ -1,6 +1,8 @@
 package prospety
 
-import "time"
+import (
+	"time"
+)
 
 type ChannelType = int
 
@@ -48,69 +50,17 @@ const (
 )
 
 type QuickSearch struct {
-	ID        int          `json:"id"`
-	Status    SearchStatus `json:"status"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
-	Prospect  any/*Prospect*/ `json:"prospect"`
+	ID        int              `json:"id"`
+	Status    SearchStatus     `json:"status"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
+	Prospect  *ProspectPreview `json:"prospect"`
 }
 
-type apiQuickSearch struct {
-	ID                 int    `json:"id"`
-	Status             string `json:"status"`
-	CreatedAtFormatted string `json:"created_at_formatted"`
-	UpdatedAtFormatted string `json:"updated_at_formatted"`
-	CreatedAt          string `json:"created_at"`
-	UpdatedAt          string `json:"updated_at"`
-	Prospect           any    `json:"prospect"`
-}
-
-func (s *apiQuickSearch) toQuickSearch() (*QuickSearch, error) {
-	parsedCreatedAt, err := time.Parse(time.RFC3339, s.CreatedAt)
-	if err != nil {
-		return nil, err
-	}
-
-	parsedUpdatedAt, err := time.Parse(time.RFC3339, s.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
-	// check if any is a map[string]interface{}
-	// if it is, check if it has a "video_keywords" field
-	var newProspect any
-	if prospect, ok := s.Prospect.(map[string]interface{}); ok {
-		if _, ok := prospect["video_keywords"]; ok {
-			newProspect, err = mapToYouTubeProspect(prospect)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			newProspect, err = mapToInstagramProspect(prospect)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return &QuickSearch{
-		ID:        s.ID,
-		Status:    SearchStatus(s.Status),
-		CreatedAt: parsedCreatedAt,
-		UpdatedAt: parsedUpdatedAt,
-		Prospect:  newProspect,
-	}, nil
-}
-
-type YouTubeProspectPreview struct {
+type ProspectPreview struct {
 	Photo string `json:"photo"`
 	Name  string `json:"name"`
 	URL   string `json:"url"`
-}
-
-type InstagramProspectPreview struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
 }
 
 const (
@@ -121,7 +71,7 @@ const (
 	SearchTypeHashtag  = "hashtag"
 )
 
-type YouTubeStandardSearchCriteria struct {
+type StandardSearchCriteria struct {
 	Keywords                  []string `json:"keywords"`
 	KeywordsMode              string   `json:"keywords_mode"`
 	ExcludedKeywords          []string `json:"excluded_keywords"`
@@ -140,7 +90,7 @@ type YouTubeStandardSearchCriteria struct {
 	CreatedRange              []int    `json:"created_range"`
 }
 
-type YouTubeSimilarSearchCriteria struct {
+type SimilarSearchCriteria struct {
 	RequiredKeywords                    bool     `json:"required_keywords"`
 	RequiredVideoKeywords               bool     `json:"required_video_keywords"`
 	RequiredCategory                    bool     `json:"required_category"`
@@ -161,8 +111,8 @@ type YouTubeSimilarSearchCriteria struct {
 	References                          []string `json:"references"`
 }
 
-type YouTubeStandardSearch struct {
-	YouTubeStandardSearchCriteria
+type StandardSearch struct {
+	StandardSearchCriteria
 
 	PricingMethod           string `json:"pricing_method"`
 	EmailVerificationMethod string `json:"email_verification_method"`
@@ -184,7 +134,7 @@ type Search struct {
 	Progress           SearchProgress `json:"progress"`
 	Searched           bool           `json:"searched"`
 	GatheringProspects bool           `json:"gathering_prospects"`
-	Data               any/*SearchData*/ `json:"data"`
+	Data               StandardSearch `json:"data"` // TODO: make it generic
 }
 
 type SearchProgress struct {
@@ -192,8 +142,8 @@ type SearchProgress struct {
 	Total   int `json:"total"`
 }
 
-type YouTubeProspect struct {
-	YouTubeProspectPreview
+type Prospect struct {
+	ProspectPreview
 
 	Email         string   `json:"email"`
 	Phone         string   `json:"phone"`
@@ -207,10 +157,4 @@ type YouTubeProspect struct {
 	TotalViews    int64    `json:"total_views"`
 	TotalVideos   int      `json:"total_videos"`
 	LastVideo     string   `json:"last_video"`
-}
-
-type InstagramProspect struct {
-	InstagramProspectPreview
-
-	// TODO: Implement.
 }

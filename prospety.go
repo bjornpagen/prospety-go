@@ -252,8 +252,8 @@ func (c *Client) GetChannel(id int) (*Channel, error) {
 }
 
 type getQuickSearchesResponse struct {
-	Total int              `json:"total"`
-	Data  []apiQuickSearch `json:"data"`
+	Total int           `json:"total"`
+	Data  []QuickSearch `json:"data"`
 }
 
 func (c *Client) GetQuickSearches() ([]QuickSearch, error) {
@@ -305,17 +305,7 @@ func (c *Client) getQuickSearches(limit, page int) ([]QuickSearch, error) {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	quickSearches := make([]QuickSearch, len(res.Data))
-	for i, quickSearch := range res.Data {
-		s, err := quickSearch.toQuickSearch()
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert quick search: %w", err)
-		}
-
-		quickSearches[i] = *s
-	}
-
-	return quickSearches, nil
+	return res.Data, nil
 }
 
 type createQuickSearchPayload struct {
@@ -343,13 +333,13 @@ func (c *Client) GetQuickSearch(id int) (*QuickSearch, error) {
 		return nil, fmt.Errorf("failed to get quick search: %w", err)
 	}
 
-	res := &apiQuickSearch{}
+	res := &QuickSearch{}
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	return res.toQuickSearch()
+	return res, nil
 }
 
 func (c *Client) DeleteQuickSearch(id int) error {
@@ -367,10 +357,10 @@ type getPotentialProspectsCountResponse struct {
 
 func (c *Client) GetPotentialProspectsCount(criteria any) (int, error) {
 	switch v := criteria.(type) {
-	case YouTubeStandardSearchCriteria:
-		return getPotentialProspectsCountYouTubeStandard(c, v)
-	case YouTubeSimilarSearchCriteria:
-		return getPotentialProspectsCountYouTubeSimilar(c, v)
+	case StandardSearchCriteria:
+		return getPotentialProspectsCountYouTubeStandard(c, &v)
+	case SimilarSearchCriteria:
+		return getPotentialProspectsCountYouTubeSimilar(c, &v)
 	default:
 		return 0, fmt.Errorf("unknown search criteria data type: %T", v)
 	}
@@ -382,7 +372,7 @@ type getPotentialProspectsCountPayload struct {
 	Data      any         `json:"data"`
 }
 
-func getPotentialProspectsCountYouTubeStandard(c *Client, criteria YouTubeStandardSearchCriteria) (int, error) {
+func getPotentialProspectsCountYouTubeStandard(c *Client, criteria *StandardSearchCriteria) (int, error) {
 	payload := getPotentialProspectsCountPayload{
 		Type:      SearchTypeStandard,
 		ChannelId: ChannelYouTube,
@@ -403,7 +393,7 @@ func getPotentialProspectsCountYouTubeStandard(c *Client, criteria YouTubeStanda
 	return res.Count, nil
 }
 
-func getPotentialProspectsCountYouTubeSimilar(c *Client, criteria YouTubeSimilarSearchCriteria) (int, error) {
+func getPotentialProspectsCountYouTubeSimilar(c *Client, criteria *SimilarSearchCriteria) (int, error) {
 	payload := getPotentialProspectsCountPayload{
 		Type:      SearchTypeSimilar,
 		ChannelId: ChannelYouTube,
@@ -426,10 +416,10 @@ func getPotentialProspectsCountYouTubeSimilar(c *Client, criteria YouTubeSimilar
 
 func (c *Client) GetPotentialProspects(criteria any) (any, error) {
 	switch v := criteria.(type) {
-	case YouTubeStandardSearchCriteria:
-		return getPotentialProspectsYouTubeStandard(c, v)
-	case YouTubeSimilarSearchCriteria:
-		return getPotentialProspectsYouTubeSimilar(c, v)
+	case StandardSearchCriteria:
+		return getPotentialProspectsYouTubeStandard(c, &v)
+	case SimilarSearchCriteria:
+		return getPotentialProspectsYouTubeSimilar(c, &v)
 	default:
 		return nil, fmt.Errorf("unknown search criteria type: %T", v)
 	}
@@ -437,7 +427,7 @@ func (c *Client) GetPotentialProspects(criteria any) (any, error) {
 
 type getPotentialProspectsPayload = getPotentialProspectsCountPayload
 
-func getPotentialProspectsYouTubeStandard(c *Client, criteria YouTubeStandardSearchCriteria) ([]YouTubeProspectPreview, error) {
+func getPotentialProspectsYouTubeStandard(c *Client, criteria *StandardSearchCriteria) ([]ProspectPreview, error) {
 	payload := getPotentialProspectsPayload{
 		Type:      SearchTypeStandard,
 		ChannelId: ChannelYouTube,
@@ -449,7 +439,7 @@ func getPotentialProspectsYouTubeStandard(c *Client, criteria YouTubeStandardSea
 		return nil, fmt.Errorf("failed to get potential prospects: %w", err)
 	}
 
-	var res []YouTubeProspectPreview
+	var res []ProspectPreview
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
@@ -458,7 +448,7 @@ func getPotentialProspectsYouTubeStandard(c *Client, criteria YouTubeStandardSea
 	return res, nil
 }
 
-func getPotentialProspectsYouTubeSimilar(c *Client, criteria YouTubeSimilarSearchCriteria) ([]YouTubeProspectPreview, error) {
+func getPotentialProspectsYouTubeSimilar(c *Client, criteria *SimilarSearchCriteria) ([]ProspectPreview, error) {
 	payload := getPotentialProspectsPayload{
 		Type:      SearchTypeSimilar,
 		ChannelId: ChannelYouTube,
@@ -470,7 +460,7 @@ func getPotentialProspectsYouTubeSimilar(c *Client, criteria YouTubeSimilarSearc
 		return nil, fmt.Errorf("failed to get potential prospects: %w", err)
 	}
 
-	var res []YouTubeProspectPreview
+	var res []ProspectPreview
 	err = json.Unmarshal(data, &res)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
@@ -481,7 +471,7 @@ func getPotentialProspectsYouTubeSimilar(c *Client, criteria YouTubeSimilarSearc
 
 type getSearchesResponse struct {
 	Total int      `json:"total"`
-	Data  []Search `json:"data"`
+	Data  []Search `json:"data"` // TODO: make generic
 }
 
 func (c *Client) GetSearches() ([]Search, error) {
@@ -533,26 +523,6 @@ func (c *Client) getSearches(limit, page int) ([]Search, error) {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	// assume it's a YouTubeStandardSearch for now. TODO: handle other types
-	for i := range res.Data {
-		// check if nil, then check if it's a map[string]interface{}
-		if res.Data[i].Data == nil {
-			return nil, fmt.Errorf("data is nil")
-		}
-
-		v, ok := res.Data[i].Data.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("data is not a map[string]interface{}")
-		}
-
-		newData, err := mapToYouTubeStandardSearchData(v)
-		if err != nil {
-			return nil, fmt.Errorf("failed to map search data: %w", err)
-		}
-
-		res.Data[i].Data = newData
-	}
-
 	return res.Data, nil
 }
 
@@ -568,14 +538,14 @@ type createSearchPayload struct {
 
 func (c *Client) CreateSearch(title string, limit int, searchData any) error {
 	switch v := searchData.(type) {
-	case YouTubeStandardSearch:
-		return createSearchYouTubeStandard(c, title, limit, v)
+	case StandardSearch:
+		return createSearchYouTubeStandard(c, title, limit, &v)
 	default:
 		return fmt.Errorf("unknown search data type: %T", v)
 	}
 }
 
-func createSearchYouTubeStandard(c *Client, title string, limit int, data YouTubeStandardSearch) error {
+func createSearchYouTubeStandard(c *Client, title string, limit int, data *StandardSearch) error {
 	payload := createSearchPayload{
 		Title:     title,
 		Type:      SearchTypeStandard,
@@ -605,52 +575,6 @@ func (c *Client) GetSearch(id int) (*Search, error) {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	// Unmarshal the data field into one of our types. Currently res.Data is a map[string]interface{}.
-	// Need to switch both on res.Data.Type and res.ChannelID.
-	channelId := res.ChannelID
-	var dataType string
-
-	// first check if it's nil
-	if res.Data == nil {
-		return nil, fmt.Errorf("data not set")
-	}
-	// then check if it's a map, then check if it's a map[string]string
-	var mapData = make(map[string]interface{})
-	if mapData, ok := res.Data.(map[string]interface{}); ok {
-		if mapData["type"] == nil {
-			return nil, fmt.Errorf("data type not set")
-		}
-		dataType = mapData["type"].(string)
-	} else {
-		return nil, fmt.Errorf("data not set")
-	}
-
-	switch channelId {
-	case ChannelYouTube:
-		switch dataType {
-		case SearchTypeStandard:
-			newData, err := mapToYouTubeStandardSearchData(mapData)
-			if err != nil {
-				return nil, fmt.Errorf("failed to unmarshal data: %w", err)
-			}
-			res.Data = newData
-		case SearchTypeImport:
-			return nil, fmt.Errorf("import search type not implemented")
-		case SearchTypeSimilar:
-			return nil, fmt.Errorf("similar search type not implemented")
-		case SearchTypeFollower:
-			return nil, fmt.Errorf("follower search type not implemented")
-		case SearchTypeHashtag:
-			return nil, fmt.Errorf("hashtag search type not implemented")
-		default:
-			return nil, fmt.Errorf("unknown search type: %s", dataType)
-		}
-	case ChannelInstagram:
-		return nil, fmt.Errorf("instagram not implemented")
-	default:
-		return nil, fmt.Errorf("unknown channel id: %d", channelId)
-	}
-
 	return res, nil
 }
 
@@ -658,14 +582,14 @@ type updateSearchPayload = createSearchPayload
 
 func (c *Client) UpdateSearch(id int, title string, limit int, data any) error {
 	switch v := data.(type) {
-	case YouTubeStandardSearch:
+	case StandardSearch:
 		return updateSearchYouTubeStandard(c, id, title, SearchTypeStandard, ChannelYouTube, limit, v)
 	default:
 		return fmt.Errorf("unknown search data type: %T", v)
 	}
 }
 
-func updateSearchYouTubeStandard(c *Client, id int, title, dataType string, channelId, limit int, data YouTubeStandardSearch) error {
+func updateSearchYouTubeStandard(c *Client, id int, title, dataType string, channelId, limit int, data StandardSearch) error {
 	payload := updateSearchPayload{
 		Title:     title,
 		Type:      dataType,
@@ -720,11 +644,11 @@ func (c *Client) FinishSearch(id int) error {
 }
 
 type getProspectsResponse struct {
-	Total int `json:"total"`
-	Data  any `json:"data"`
+	Total int        `json:"total"`
+	Data  []Prospect `json:"data"` // TODO: make this generic
 }
 
-func (c *Client) GetProspects(id int) ([]YouTubeProspect, error) { // TODO: make this generic
+func (c *Client) GetProspects(id int) ([]Prospect, error) {
 	data, err := c.get([]string{"searches", strconv.Itoa(id), "prospects"}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get prospects: %w", err)
@@ -736,39 +660,7 @@ func (c *Client) GetProspects(id int) ([]YouTubeProspect, error) { // TODO: make
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	var prospects []YouTubeProspect
-
-	// first check if it's nil
-	if res.Data == nil {
-		return nil, fmt.Errorf("data is nil")
-	}
-	// then check if it's a []interface{}, then check if it's child is a map[string]interface{}
-	if sliceData, ok := res.Data.([]interface{}); ok {
-		if len(sliceData) == 0 {
-			return nil, nil
-		}
-
-		// Convert elements in sliceData to map[string]interface{}
-		mapDataSlice := make([]map[string]interface{}, len(sliceData))
-		for i, elem := range sliceData {
-			if mapData, ok := elem.(map[string]interface{}); ok {
-				mapDataSlice[i] = mapData
-			} else {
-				return nil, fmt.Errorf("element %d is not a map[string]interface{}", i)
-			}
-		}
-
-		// just assume it's a youtube standard search 🤡
-		newData, err := mapToYouTubeProspects(mapDataSlice, len(mapDataSlice))
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal data: %w", err)
-		}
-		prospects = append(prospects, newData...)
-	} else {
-		return nil, fmt.Errorf("data is not a []interface{}")
-	}
-
-	return prospects, nil
+	return res.Data, nil
 }
 
 func (c *Client) ExportProspects(id int, fileType string) (string, error) {
