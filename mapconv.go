@@ -157,8 +157,8 @@ func mapToYouTubeStandardSearchData(data map[string]any) (*YouTubeStandardSearch
 	if v, ok := data["subscribers_range"]; ok {
 		if v2, ok := v.([]interface{}); ok {
 			for _, v3 := range v2 {
-				if v4, ok := v3.(int64); ok {
-					res.SubscribersRange = append(res.SubscribersRange, v4)
+				if v4, ok := v3.(float64); ok {
+					res.SubscribersRange = append(res.SubscribersRange, int64(v4))
 				} else {
 					return nil, fmt.Errorf("failed to cast subscribers_range to int64")
 				}
@@ -177,8 +177,8 @@ func mapToYouTubeStandardSearchData(data map[string]any) (*YouTubeStandardSearch
 	if v, ok := data["total_views_range"]; ok {
 		if v2, ok := v.([]interface{}); ok {
 			for _, v3 := range v2 {
-				if v4, ok := v3.(int64); ok {
-					res.TotalViewsRange = append(res.TotalViewsRange, v4)
+				if v4, ok := v3.(float64); ok {
+					res.TotalViewsRange = append(res.TotalViewsRange, int64(v4))
 				} else {
 					return nil, fmt.Errorf("failed to cast total_views_range to int64")
 				}
@@ -197,8 +197,8 @@ func mapToYouTubeStandardSearchData(data map[string]any) (*YouTubeStandardSearch
 	if v, ok := data["average_views_per_video_range"]; ok {
 		if v2, ok := v.([]interface{}); ok {
 			for _, v3 := range v2 {
-				if v4, ok := v3.(int64); ok {
-					res.AverageViewsPerVideoRange = append(res.AverageViewsPerVideoRange, v4)
+				if v4, ok := v3.(float64); ok {
+					res.AverageViewsPerVideoRange = append(res.AverageViewsPerVideoRange, int64(v4))
 				} else {
 					return nil, fmt.Errorf("failed to cast average_views_per_video_range to int64")
 				}
@@ -217,8 +217,8 @@ func mapToYouTubeStandardSearchData(data map[string]any) (*YouTubeStandardSearch
 	if v, ok := data["total_videos_range"]; ok {
 		if v2, ok := v.([]interface{}); ok {
 			for _, v3 := range v2 {
-				if v4, ok := v3.(int); ok {
-					res.TotalVideosRange = append(res.TotalVideosRange, v4)
+				if v4, ok := v3.(float64); ok {
+					res.TotalVideosRange = append(res.TotalVideosRange, int(v4))
 				} else {
 					return nil, fmt.Errorf("failed to cast total_videos_range to int")
 				}
@@ -237,8 +237,8 @@ func mapToYouTubeStandardSearchData(data map[string]any) (*YouTubeStandardSearch
 	if v, ok := data["latest_video_range"]; ok {
 		if v2, ok := v.([]interface{}); ok {
 			for _, v3 := range v2 {
-				if v4, ok := v3.(int); ok {
-					res.LatestVideoRange = append(res.LatestVideoRange, v4)
+				if v4, ok := v3.(float64); ok {
+					res.LatestVideoRange = append(res.LatestVideoRange, int(v4))
 				} else {
 					return nil, fmt.Errorf("failed to cast latest_video_range to int")
 				}
@@ -257,8 +257,8 @@ func mapToYouTubeStandardSearchData(data map[string]any) (*YouTubeStandardSearch
 	if v, ok := data["created_range"]; ok {
 		if v2, ok := v.([]interface{}); ok {
 			for _, v3 := range v2 {
-				if v4, ok := v3.(int); ok {
-					res.CreatedRange = append(res.CreatedRange, v4)
+				if v4, ok := v3.(float64); ok {
+					res.CreatedRange = append(res.CreatedRange, int(v4))
 				} else {
 					return nil, fmt.Errorf("failed to cast created_range to int")
 				}
