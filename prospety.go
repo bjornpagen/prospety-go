@@ -445,6 +445,26 @@ func (c *Client) GetSearches(limit, page int) ([]Search, error) {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
+	// assume it's a YouTubeStandardSearch for now. TODO: handle other types
+	for i := range res.Data {
+		// check if nil, then check if it's a map[string]interface{}
+		if res.Data[i].Data == nil {
+			return nil, fmt.Errorf("data is nil")
+		}
+
+		v, ok := res.Data[i].Data.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("data is not a map[string]interface{}")
+		}
+
+		newData, err := mapToYouTubeStandardSearchData(v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map search data: %w", err)
+		}
+
+		res.Data[i].Data = newData
+	}
+
 	return res.Data, nil
 }
 
