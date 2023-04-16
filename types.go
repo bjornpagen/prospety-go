@@ -5,8 +5,8 @@ import "time"
 type ChannelType = int
 
 const (
-	ChannelYouTube   = ChannelType(0)
-	ChannelInstagram = ChannelType(1)
+	ChannelYouTube   = ChannelType(1)
+	ChannelInstagram = ChannelType(2)
 )
 
 type Channel struct {
