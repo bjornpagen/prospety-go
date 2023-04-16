@@ -736,21 +736,14 @@ func (c *Client) GetProspects(id int) (any, error) {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	// Unmarshal the data field into one of our types. Currently res.Data is a []map[string]interface{}.
-	// It's either a []YouTubeProspect or []InstagramProspect.
-	// We can do this by checking for the Data["video_keywords"]. If it's set, it's a YouTubeProspect.
-	// If it's not set, it's an InstagramProspect.
-	// ONLY CHECK for video_keywords, because it's the only field that's unique to YouTubeProspect.
-	// Literally don't check any other fields, because they're not unique to InstagramProspect.
-
 	// first check if it's nil
 	if res.Data == nil {
-		return nil, fmt.Errorf("data not set")
+		return nil, fmt.Errorf("data is nil")
 	}
 	// then check if it's a slice, then check if it's a []map[string]string
 	if sliceData, ok := res.Data.([]map[string]interface{}); ok {
 		if len(sliceData) == 0 {
-			return nil, fmt.Errorf("data not set")
+			return nil, fmt.Errorf("data has no elements")
 		}
 		if sliceData[0]["video_keywords"] != nil {
 			newData, err := mapToYouTubeProspects(sliceData, res.Total)
