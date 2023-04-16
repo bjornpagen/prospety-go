@@ -382,7 +382,7 @@ type getPotentialProspectsCountPayload struct {
 	Data      any         `json:"data"`
 }
 
-func getPotentialProspectsCountYouTubeStandard[T YouTubeStandardSearchCriteria](c *Client, criteria T) (int, error) {
+func getPotentialProspectsCountYouTubeStandard(c *Client, criteria YouTubeStandardSearchCriteria) (int, error) {
 	payload := getPotentialProspectsCountPayload{
 		Type:      SearchTypeStandard,
 		ChannelId: ChannelYouTube,
@@ -403,7 +403,7 @@ func getPotentialProspectsCountYouTubeStandard[T YouTubeStandardSearchCriteria](
 	return res.Count, nil
 }
 
-func getPotentialProspectsCountYouTubeSimilar[T YouTubeSimilarSearchCriteria](c *Client, criteria T) (int, error) {
+func getPotentialProspectsCountYouTubeSimilar(c *Client, criteria YouTubeSimilarSearchCriteria) (int, error) {
 	payload := getPotentialProspectsCountPayload{
 		Type:      SearchTypeSimilar,
 		ChannelId: ChannelYouTube,
@@ -437,7 +437,7 @@ func (c *Client) GetPotentialProspects(criteria any) (any, error) {
 
 type getPotentialProspectsPayload = getPotentialProspectsCountPayload
 
-func getPotentialProspectsYouTubeStandard[T YouTubeStandardSearchCriteria](c *Client, criteria T) ([]YouTubeProspectPreview, error) {
+func getPotentialProspectsYouTubeStandard(c *Client, criteria YouTubeStandardSearchCriteria) ([]YouTubeProspectPreview, error) {
 	payload := getPotentialProspectsPayload{
 		Type:      SearchTypeStandard,
 		ChannelId: ChannelYouTube,
@@ -458,7 +458,7 @@ func getPotentialProspectsYouTubeStandard[T YouTubeStandardSearchCriteria](c *Cl
 	return res, nil
 }
 
-func getPotentialProspectsYouTubeSimilar[T YouTubeSimilarSearchCriteria](c *Client, criteria T) ([]YouTubeProspectPreview, error) {
+func getPotentialProspectsYouTubeSimilar(c *Client, criteria YouTubeSimilarSearchCriteria) ([]YouTubeProspectPreview, error) {
 	payload := getPotentialProspectsPayload{
 		Type:      SearchTypeSimilar,
 		ChannelId: ChannelYouTube,
@@ -575,7 +575,7 @@ func (c *Client) CreateSearch(title string, limit int, searchData any) error {
 	}
 }
 
-func createSearchYouTubeStandard[T YouTubeStandardSearch](c *Client, title string, limit int, data T) error {
+func createSearchYouTubeStandard(c *Client, title string, limit int, data YouTubeStandardSearch) error {
 	payload := createSearchPayload{
 		Title:     title,
 		Type:      SearchTypeStandard,
@@ -665,7 +665,7 @@ func (c *Client) UpdateSearch(id int, title string, limit int, data any) error {
 	}
 }
 
-func updateSearchYouTubeStandard[T YouTubeStandardSearch](c *Client, id int, title, dataType string, channelId, limit int, data T) error {
+func updateSearchYouTubeStandard(c *Client, id int, title, dataType string, channelId, limit int, data YouTubeStandardSearch) error {
 	payload := updateSearchPayload{
 		Title:     title,
 		Type:      dataType,
@@ -724,7 +724,7 @@ type getProspectsResponse struct {
 	Data  any `json:"data"`
 }
 
-func (c *Client) GetProspects(id int) (any, error) {
+func (c *Client) GetProspects(id int) ([]YouTubeProspect, error) { // TODO: make this generic
 	data, err := c.get([]string{"searches", strconv.Itoa(id), "prospects"}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get prospects: %w", err)
@@ -736,33 +736,39 @@ func (c *Client) GetProspects(id int) (any, error) {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
+	var prospects []YouTubeProspect
+
 	// first check if it's nil
 	if res.Data == nil {
 		return nil, fmt.Errorf("data is nil")
 	}
-	// then check if it's a slice, then check if it's a []map[string]string
-	if sliceData, ok := res.Data.([]map[string]interface{}); ok {
+	// then check if it's a []interface{}, then check if it's child is a map[string]interface{}
+	if sliceData, ok := res.Data.([]interface{}); ok {
 		if len(sliceData) == 0 {
-			return nil, fmt.Errorf("data has no elements")
+			return nil, nil
 		}
-		if sliceData[0]["video_keywords"] != nil {
-			newData, err := mapToYouTubeProspects(sliceData, res.Total)
-			if err != nil {
-				return nil, fmt.Errorf("failed to unmarshal data: %w", err)
+
+		// Convert elements in sliceData to map[string]interface{}
+		mapDataSlice := make([]map[string]interface{}, len(sliceData))
+		for i, elem := range sliceData {
+			if mapData, ok := elem.(map[string]interface{}); ok {
+				mapDataSlice[i] = mapData
+			} else {
+				return nil, fmt.Errorf("element %d is not a map[string]interface{}", i)
 			}
-			res.Data = newData
-		} else {
-			newData, err := mapToInstagramProspects(sliceData, res.Total)
-			if err != nil {
-				return nil, fmt.Errorf("failed to unmarshal data: %w", err)
-			}
-			res.Data = newData
 		}
+
+		// just assume it's a youtube standard search 🤡
+		newData, err := mapToYouTubeProspects(mapDataSlice, len(mapDataSlice))
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal data: %w", err)
+		}
+		prospects = append(prospects, newData...)
 	} else {
-		return nil, fmt.Errorf("data not set")
+		return nil, fmt.Errorf("data is not a []interface{}")
 	}
 
-	return res, nil
+	return prospects, nil
 }
 
 func (c *Client) ExportProspects(id int, fileType string) (string, error) {

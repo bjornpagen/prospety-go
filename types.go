@@ -102,10 +102,6 @@ func (s *apiQuickSearch) toQuickSearch() (*QuickSearch, error) {
 	}, nil
 }
 
-type ProspectPreview interface {
-	YouTubeProspectPreview | InstagramProspectPreview
-}
-
 type YouTubeProspectPreview struct {
 	Photo string `json:"photo"`
 	Name  string `json:"name"`
