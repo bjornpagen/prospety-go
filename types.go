@@ -145,16 +145,16 @@ type SearchProgress struct {
 type Prospect struct {
 	ProspectPreview
 
-	Email         string   `json:"email"`
-	Phone         string   `json:"phone"`
-	Keywords      []string `json:"keywords"`
-	VideoKeywords []string `json:"video_keywords"`
-	Category      string   `json:"category"`
-	Country       string   `json:"country"`
-	Links         []string `json:"links"`
-	CreatedAt     string   `json:"created_at"`
-	Subscribers   int64    `json:"subscribers"`
-	TotalViews    int64    `json:"total_views"`
-	TotalVideos   int      `json:"total_videos"`
-	LastVideo     string   `json:"last_video"`
+	Email    string   `json:"email"`
+	Phone    string   `json:"phone"`
+	Keywords []string `json:"keywords"`
+	//VideoKeywords []string `json:"video_keywords"`
+	Category    string   `json:"category"`
+	Country     string   `json:"country"`
+	Links       []string `json:"links"`
+	CreatedAt   string   `json:"created_at"`
+	Subscribers int64    `json:"subscribers"`
+	TotalViews  int64    `json:"total_views"`
+	TotalVideos int      `json:"total_videos"`
+	LastVideo   string   `json:"last_video"`
 }
